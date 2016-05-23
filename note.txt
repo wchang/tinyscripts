@@ -1,0 +1,448 @@
+Q:
+
+02/22/2011 08:14:05;0002;   pbs_mom;Svr;pbs_mom;Torque Mom Version = 2.3.7, loglevel = 0
+02/22/2011 08:15:33;0002;   pbs_mom;n/a;mom_server_check_connection;connection to server node001 timeout
+02/22/2011 08:15:33;0002;   pbs_mom;n/a;mom_server_check_connection;sending hello to server node001
+Feb 21 08:22:30 node005 sshd[10567]: Address 192.168.0.1 maps to node001, but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT!
+
+A:
+[root@node010 ~]# telnet node001 15001
+Trying 192.168.0.1...
+Connected to node001 (192.168.0.1).
+Escape character is '^]'.
+
+[root@node005 ~]# telnet node001 15001
+Trying 192.168.21.254...
+Connected to node001 (192.168.21.254).
+Escape character is '^]'.
+
+The difference is the way to node001 (192.168.0.1 and 192.168.21.254)
+Modify /etc/hosts and then restart pbs_mom
+---------------------------------------------------------------------------------------
+/etc/fstab
+
+/dev/sda2               /                       ext3    defaults        1 1
+/dev/sda1               /boot                   ext3    defaults        1 2
+none                    /dev/pts                devpts  gid=5,mode=620  0 0
+none                    /dev/shm                tmpfs   defaults        0 0
+none                    /proc                   proc    defaults        0 0
+none                    /sys                    sysfs   defaults        0 0
+/dev/sda3 swap                    swap    defaults        0 0
+192.168.0.210:/vol/vol1 /data1 nfs     nolock,nfsvers=3,intr,rsize=8192,wsize=8192 0 0
+192.168.0.210:/vol/vol3 /data3 nfs     nolock,nfsvers=3,intr,rsize=8192,wsize=8192        0 0
+117.103.106.249:/home   /home                   nfs     defaults        0 0
+192.168.0.210:/data0 /data5 nfs nolock,nfsvers=3,intr,rsize=8192,wsize=8192 0 0
+192.168.0.253:/seism    /seism                  nfs     nolock,nfsvers=3,intr,rsize=8192,wsize=8192 0 0
+/dev/scd0               /media/cdrecorder2      auto    pamconsole,exec,noauto,managed 0 0
+/dev/sdb                /media/floppy2          auto    pamconsole,exec,noauto,managed 0 0
+
+
+---------------------------------------------------------------------------------------
+
+After the installation, please install kernel-smp so that you can use mutiple cpus
+
+1. yum -y install kernel-smp
+2. modify /boot/grub/menu.lst "default = 0"
+   means use Scientific Linux CERN SLC (2.6.9-100.EL.cernsmp) as kernel in 
+   the next boot
+
+default=0
+timeout=5
+splashimage=(hd0,0)/grub/splash.xpm.gz
+hiddenmenu
+title Scientific Linux CERN SLC (2.6.9-100.EL.cernsmp)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.9-100.EL.cernsmp ro root=/dev/sda2 rhgb quiet
+        initrd /initrd-2.6.9-100.EL.cernsmp.img
+title Scientific Linux CERN SLC (2.6.9-89.EL.cernsmp)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.9-89.EL.cernsmp ro root=/dev/sda2 rhgb quiet
+        initrd /initrd-2.6.9-89.EL.cernsmp.img
+
+----------------------------------------------------------------------------------------
+
+ for i in `cat nodes` ; do export i ; bash -c 'nohup ssh $i "reboot" >> /tmp/result 2>&1 &' ; done
+
+git:
+1. list branch by git
+git tag -l
+
+2. check out branch and makes it as current:
+git checkout pnfs-all-2.6.38-2011-03-25 -b pnfs-all-2.6.38-2011-03-25
+
+3. make sure you are in pnfs-linux2.6.32 branch:
+git status
+
+PNFS: 
+git clone git://linux-nfs.org/~bhalevy/linux-pnfs.git
+git clone git://linux-nfs.org/~bhalevy/pnfs-nfs-utils.git
+
+Recompile kernel:
+cd linux-pnfs
+cp /boot/config-2.6.32-71.el6.x86_64 .config
+make oldconfig
+make menuconfig
+Don't choose "Panasas"
+Choose Provide a pNFS block client
+Choose NFS client support for NFSv4.1 (EXPERIMENTAL)
+make clean
+make && make modules && make modules_install && make install
+modify /boot/grub/menu.lst
+Install pnfs-nfs-utils on both server and client
+
+yum -y install tcp_wrappers-devel.x86_64 tcp_wrappers-libs.x86_64
+yum install libevent-devel.x86_64 -y
+yum install device-mapper-devel.x86_64 -y
+yum -y install device-mapper-event-devel.x86_64
+yum install -y nfs-utils-lib-devel
+yum install -y libblkid-devel.x86_64
+
+------------------------------------------------------------------------------------------
+IBM blade use ctrl+Alt+F2 to enter root shell
+mount -o remount,rw /
+GPT is for large scall harddisk, it cause some problems when formatting partions.
+The solution is formatting msdos : 
+parted /dev/sda
+mklabel
+msdos
+reboot
+http://blog.itechol.com/space-4-do-blog-id-700.html
+
+python2.4 /opt/pkg/mpich2.intel/bin/mpd.py --ncpus=1 -e -d
+------------------------------------------------------------------------------------------
+Q : 
+Authorization error: Failed to get the local user id via glexec
+A1:
+modify /etc/nsswitch.conf
+passwd:     nis files
+shadow:     nis files
+group:      nis files
+A2:
+Check if the accounts match the accounts in /etc/grid-security/gridmapdir
+ce log : 
+tail -f /opt/glite/var/log/glite-ce-cream.log 
+------------------------------------------------------------------------------------------
+Backup log file:
+cat /etc/cron.d/server_logs PATH=/sbin:/bin:/usr/sbin:/usr/bin 33 3 * * * root find /var/spool/pbs/server_logs -mtime +7 -exec gzip -9 {} \; 2> /dev/null
+
+-------------------------------------------------------------------------------------------
+Some kernel parameters : /etc/sysctl.conf
+Change log outout : /etc/syslog.conf
+--------------------------------------------------------------------------------------------
+exofs+pnfs
+One MDS, two DS and two Clients
+DS :
+(1) 
+1. as-wn182,as-wn183
+2. SL6, kernel:2.6.32
+3. part --ondisk=sda /osd0 --fstype ext4 --size=300000
+4. Download : 
+   git clone --recursive git://git.open-osd.org/osc-osd.git tgt
+5. make 
+6. Start demon: 
+   otgtd
+7. create open osd target:
+   otgtadm --lld iscsi --mode target --op new --tid 1 -T .osd0.$(hostname)
+8. export local dir as LUN to osd target:
+   otgtadm --lld iscsi --mode logicalunit --op new --tid 1 --lun 0 --bstype=osdemu --device-type osd --backing-store=/osd0/
+9. set ACL for your client
+   otgtadm --lld iscsi --mode target --op bind --tid 1 --initiator-address 117.103.97.0/24   
+MDS :
+(2) 
+1. as-wn184
+2. SL6, kernel:2.6.32-pnfs+
+   (menuconfig ->  Miscellaneous filesystems-> exofs: OSD based file system support)
+3. Download :
+   git clone git://git.open-osd.org/open-osd.git
+4. make 
+5. Do it on MDS and every disk servers
+   iscsiadm -m discovery -t sendtargets -p 117.103.97.85 -l
+(4)
+6. ./mkfs.exofs --pid=65536 --raid=0 --mirrors=0 --stripe_pages=64 --group_width=0 --group_depth=0 
+   --dev=/dev/osd0 --format=0 --osdname=a3c317a8-00a2-446c-948a-f1c4401fc0d7 
+   --dev=/dev/osd1 --format=0 --osdname=7b3ee3f3-ffce-47d7-9aee-4262d6dfa2eb
+7. mount -t exofs -o osdname=a3c317a8-00a2-446c-948a-f1c4401fc0d7,pid=65536,_netdev /dev/osd0  /exofs
+8. Export /exofs for pnfs client :
+   vim /etc/exports
+   /exofs 117.103.97.0/255.255.255.0(rw,sync,no_wdelay,no_root_squash,fsid=0,insecure,no_subtree_check,pnfs)
+   service nfs start
+Client : 
+1. as-wn185,as-wn186
+2. SL6, kernel 2.6.38-pnfs
+3. modprobe -a objlayoutdriver
+   (menuconfig-> File systems-> Network File Systems-> Provide support for the pNFS Objects Layout Driver for NFSv4.1 pNFS )
+4. yum install iscsi-initiator-utils-devel.x86_64 -y
+5. iscsiadm -m discovery -t sendtargets -p 117.103.97.85 -l
+6. mount -t nfs4 -o minorversion=1,nolock as-wn184.euasiagrid.org:/ /mnt
+Ref :
+http://www.open-osd.org/bin/view
+./configure --prefix=/usr GSSGLUE_CFLAGS=-I/usr/local/include/gssclue GSSGLUE_LIBS=-L/usr/local/lib
+------------------------------------------------------------------------------------------
+echo 0 > /sys/block/sda/queue/iosched/slice_idle
+echo 4096 > /sys/block/sd$i/queue/nr_requests
+
+------------------------------------------------------------------------------------------
+File distribution
+
+ls -lR /diskpool/data01/ies|awk '/^-/{print $5}'|sort -n|uniq -c
+-------------------------------------------------------------------------------------------
+DiskArry Build
+umount /diskpool/data0[1-4]
+(delete partion: fdisk /dev/sdb; d; w)
+pvcreate /dev/sdb1 /dev/sdc1
+pvscan
+vgcreate vg1 /dev/sdb1 /dev/sdc1
+vgdisplay
+lvcreate -I16 -i2 -L60T -nlv1 vg1
+lvdisplay
+If lv isn't available, try lvchange -a y /dev/<volgroup>
+mkfs.xfs -d sunit=32,swidth=64 /dev/vg1/lv1
+mount /dev/vg1/lv1 /diskpool/data01
+Btrfs:
+mkfs.btrfs -L BTRFS -m raid0 /dev/sdd1 /dev/sde1
+mount -L BTRFS /diskpool/data02
+-------------------------------------------------------------------------------------------
+Users start setup:/etc/profile
+-------------------------------------------------------------------------------------------
+Lustre Installation
+1. MDS:
+You need one more partion than the default.
+Download link:
+http://downloads.lustre.org/public/lustre/v1.8/lustre_1.8.7/rhel5-x86_64/
+kernel-2.6.18-194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm 
+lustre-ldiskfs-3.1.6-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm
+lustre-modules-1.8.7-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm
+lustre-1.8.7-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm
+e2fsprogs-1.41.12.2.ora1-0redhat.rhel5.x86_64.rpm
+Use rpm -ivh to install rpm packages and use rpm -Uvh to upgrade e2fsprogs
+vim /etc/modprob.conf add options lnet networks=tcp0(eth2)
+check /boot/grub/ment.list and reboot
+modprobe lustre
+modprobe ldiskfs
+modprobe lnet 'networks="tcp0(eth2)"'
+lctl list_nids
+mkfs.lustre --fsname=testfs --reformat --mdt --mgs --backfstype=ext4 /dev/sda2
+mount.lustre /dev/sda2 /media/mgs
+
+2. DS:
+kernel-2.6.18-194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm 
+lustre-ldiskfs-3.1.6-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm
+lustre-modules-1.8.7-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm
+lustre-1.8.7-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm
+e2fsprogs-1.41.12.2.ora1-0redhat.rhel5.x86_64.rpm
+Use rpm -ivh to install rpm packages and use rpm -Uvh to upgrade e2fsprogs
+vim /etc/modprob.conf add options lnet networks=tcp0(eth2)
+check /boot/grub/ment.list and reboot
+modprobe lustre
+modprobe ldiskfs
+modprobe lnet 'networks="tcp0(eth2)"'
+lctl list_nids
+mkfs.lustre --fsname=testfs --ost --mgsnode=117.103.97.82@tcp0 /dev/sda2
+mount.lustre /dev/sda2 /media/ost
+
+3. Client:
+kernel-2.6.18-194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm 
+lustre-client-modules-1.8.7-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64.rpm
+lustre-client-1.8.7-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64.rpm
+lustre-ldiskfs-3.1.6-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm
+lustre-modules-1.8.7-2.6.18_194.17.1.el5_lustre.1.8.7.x86_64-ext4.rpm
+vim /etc/modprob.conf add options lnet networks=tcp0(eth2)
+check /boot/grub/ment.list and reboot
+modprobe lustre
+modprobe ldiskfs
+modprobe lnet 'networks="tcp0(eth2)"'
+mount.lustre 117.103.97.82@tcp0:/testfs /media/lustre/
+------------------------------------------------------------------------
+In DELL Server's ks, need to chang partation to sdc since server 
+first recognize sdc
+-----------------------------------------------------------------------
+# ctrl+alt+F2
+fdisk -l
+dd if=/dev/zero of=/dev/sda bs=32768 count=1
+-----------------------------------------------------------------------
+http://117.103.106.39 MM of hpc01 as-ce02
+------------------------------------------------------------------------
+DELL Server enter command mod:enter any key on reciprocal time
+linux ks=http:// ip= netmask= gateway= dns=117.103.105.129
+------------------------------------------------------------------------
+Linux DNS:
+[aeolus@db1 etc]$ vi resolv.conf
+nameserver 202.96.128.68
+nameserver 219.136.241.206
+------------------------------------------------------------------------
+yum -y groupinstall "Development Libraries" " Development Tools"
+yum grouplist
+null' undeclared (first use in this function) sol : add #include <stdlib.h>
+mkfs.ext4 command not found sol:install e4fsprogs
+----------------------------------------------------------------------------
+torque : ndefined attribute (15002) sol : check server and client's version.
+----------------------------------------------------------------------------
+tomcat5 can't start with the log (/var/log/tomcat5)
+Caused by: java.lang.ClassNotFoundException: org.bouncycastle.jce.provider.BouncyCastleProvider
+Sol : check if bcprov-1.42.jar has been installed
+      cp bcprov-1.42.jar to /usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/lib/ext
+Ref : 
+http://kevingo75.blogspot.com/2009/04/java-classpath.html
+https://groups.google.com/group/selenium-users/browse_thread/thread/6eb6b8d31946ebaf?pli=1
+-----------------------------------------------------------------------------
+octave __cxa_guard_acquire problem :
+sol : http://octave.1599824.n4.nabble.com/src-liboctinterp-so-undefined-reference-to-cxa-guard-acquire-td1625215.html
+----------------------------------------------------------------------------
+/bin/sh^M: bad interpreter: No such file or directory problem
+sol : http://bbs.chinaunix.net/thread-2019305-1-1.html
+----------------------------------------------------------------------------
+Maui checksum does not match
+http://www.supercluster.org/pipermail/mauiusers/2010-February/004115.html
+strings /usr/sbin/maui | grep '^[0-9][0-9][0-9][0-9][0-9]$'
+diagnose --hots=your.maui.server -g --keyfile=/path/key.txt
+showq --keyfile=/keypath/key.txt
+
+*** nuwacn017 nuwacn019 nuwacn028 nuwacn110 nuwacn112 nuwacn116 need configure grid users
+*** such as atlaspil atlasprd atlas001 euasia001 euasia002
+-----------------------------------------------------------------------------------------
+Disk IO scheduler 
+[root@f-dpmp01 iosched]# cat /root/scripts/io-scheduler.set 
+#!/bin/bash
+for i in `ls -1d /sys/block/sd*`
+do
+#echo 1024 > /sys/block/sd$i/queue/read_ahead_kb
+#echo 64 > /sys/block/sd$i/queue/iosched/queued
+#echo 32 > /sys/block/sd$i/queue/iosched/quantum 
+#echo 256 > /sys/block/sd$i/queue/nr_requests 
+#echo 0 > /sys/block/sd$i/queue/iosched/slice_idle
+echo 1024 > $i/queue/read_ahead_kb
+echo 2048 > $i/queue/iosched/queued
+echo 1024 > $i/queue/iosched/quantum 
+#echo 256 > $i/queue/nr_requests 
+echo 2048 > $i/queue/nr_requests 
+echo 0 > $i/queue/iosched/slice_idle
+done
+--------------------------------------------------------------------------------------------
+opssh w-wn2000 "su -l -c 'ls -al' atlaspil"
+opssh w-wn2000 "su -l -c 'ssh batch02 hostname -f' atlaspil"
+for i in `pbsnodes -s batch02 -l up|awk -F\. '{print $1}'`; do echo $i; opssh $i "su -l -c 'ssh batch02 hostname -f' atlaspil"; done
+----------------------------------------------------------------------------------------------
+Check key pair number
+openssl rsa -in userkey.pem -modulus -noout |openssl md5
+openssl x509 -in usercert.pem -modulus -noout |openssl md5
+-------------------------------------------------------------------------------------------------
+ipmi:
+Check kernel modules : /lib/modules/2.6.32-131.0.15.el6.x86_64/kernel/drivers/char/ipmi
+Load modules: insmod ipmi_msghandler.ko; insmod ipmi_devintf.ko; insmod ipmi_si.ko or 
+modprobe ipmi_msghandler; modprobe ipmi_devintf; modprobe ipmi_si
+cat /proc/devices | grep ipmidev
+249 ipmidev
+mknod /dev/ipmi0 c 249 0
+Install ipmitool :  ./configure -enable-inft-open=static; make; make install
+Start service : service ipmievd start
+Use it : ipmitool -I open sdr 
+------------------------------------------------------------------------------------------------------------
+as-disk01:
+ifdown eth0
+modprob -r bna
+------------------------------------------------------------------------------------------------------------
+Check if we can retire server
+w
+last
+uptime
+netstat -ntpl
+qpidd (openstack service)
+virsh list (openstack command for checking VM list)
+check files
+------------------------------------------------------------------------------------------------------------
+HP infiniband installation:
+Usb, Install system with basic vedio driver
+[Tab]
+linux ks=hd:sda3:/as-wn594.ks
+where sda3 is kick start file source, not OS installtion's location
+------------------------------------------------------------------------------------------------------------
+Change host certificate:
+CreamCE:/etc/grid-security/hostcert.pem, /etc/grid-security/tomcat-cert.pem, /var/lib/glite/.certs/hostcert.pem
+DPM:/etc/grid-security/hostcert.pem, /etc/grid-security/dpmmgr/hostcert.pem, /var/lib/ldap/hostcert.pem
+------------------------------------------------------------------------------------------------------------
+CE too less jobs:
+vim /etc/glite-ce-cream-utils/glite_cream_load_monitor.conf
+--------------------------------------------------------------------------------------------------------------
+HP BIOS
+wget http://downloads.linux.hp.com/SDR/downloads/mcp/centos/6/x86_64/9.50/hp-health-9.50-1628.32.rhel6.x86_64.rpm
+rpm -ivh hp-health-9.50-1628.32.rhel6.x86_64.rpm
+hpasmcli --help
+hpasmcli -s "SHOW"
+hpasmcli -s "SHOW HT"
+hpasmcli -s "DISABLE HT"
+hpasmcli -s "SHOW HT"
+-----------------------------------------------------------------------------------------------------------------
+IB Switch monitor
+# monitor through snmp
+snmpbulkwalk  -v 2c -c public -OS 172.31.100.51 >> test.mib.51
+snmpbulkwalk  -v 2c -c public -OS 172.31.100.51 SNMPv2-SMI::mib-2.99.1.1.1.4.7
+-----------------------------------------------------------------------------------------------------------------
+HP Disk Server Temp
+ipmitool  sensor | grep '01-Inlet Ambient'
+-----------------------------------------------------------------------------------------------------------------
+Add IP address in the end of /etc/hosts.deny
+sed -i '\$s/\$/ 117.103.97.45/g' /etc/hosts.deny
+-----------------------------------------------------------------------------------------------------------------
+AWK useful:
+awk 'NR%2==1' file  
+
+[root@demo ~]# cat awk1.t  
+02.reed  100 90 100 
+03.Reed  98  92 100 
+04.huih  100 90 100 
+05.deer  99  91  99 
+06.hjl   92  100 80 
+07.gsl   80  80  80 
+08.zww   85  85  85 
+09.swe   85  85  85 
+
+[root@demo ~]# cat t.sh  
+02.#!/bin/awk -f 
+03.  
+04.# just for testing the awk 
+05.# 15/11/2012 
+06.# reed 
+07.  
+08.BEGIN{ 
+09.     print "name\tChinese\tEnglish\tMath\tTotal" 
+10.     print "-------------------------------------" 
+11.} 
+12.{total=(($2+$3+$4))} 
+13.{print $1"\t"$2"\t"$3"\t"$4"\t"total} 
+14.  
+15.{(C+=$2)(E+=$3)(M+=$4)(T+=(($2+$3+$4)))} 
+16.  
+17.END{ 
+18.    print "-------------------------------------" 
+19.    print "Count\t"C"\t"E"\t"M"\t"T 
+20.} 
+
+[root@demo ~]# ./t.sh awk1.t  
+02.name    Chinese English Math    Total 
+03.------------------------------------- 
+04.reed    100     90      100     290 
+05.Reed    98      92      100     290 
+06.huih    100     90      100     290 
+07.deer    99      91      99      289 
+08.hjl     92      100     80      272 
+09.gsl     80      80      80      240 
+10.zww     85      85      85      255 
+11.swe     85      85      85      255 
+12.------------------------------------- 
+13.Count   739     713     729     2181 
+
+----------------------------------------------------------------------------------
+su general users to execute commands
+ for((i=701;i<=732;i++)) do ssh as-wn$i "hostname; su -l -c 'pip install \'requests[security]\'' biopil "; done
+
+--------------------------------------------------------------------------------------
+Pythonbrew installation:
+Do not use easy_install, use 
+curl -kL http://xrl.us/pythonbrewinstall | bash
+and add this line to bashrc
+[[ -s $HOME/.pythonbrew/etc/bashrc ]] && source $HOME/.pythonbrew/etc/bashrc
+
+Please refer this github for information
+https://github.com/utahta/pythonbrew
+
+
