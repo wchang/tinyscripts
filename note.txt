@@ -445,4 +445,7 @@ and add this line to bashrc
 Please refer this github for information
 https://github.com/utahta/pythonbrew
 
+pip installation please reference:
+http://pip-cn.readthedocs.io/en/latest/installing.html
+
 
