@@ -4,6 +4,7 @@ import boto.s3.connection
 access_key = '<access_key>'
 secret_key = '<secret_key>'
 gateway = 'griffin-objstore.opensciencedatacloud.org'
+s3port = 443
 
 parser = argparse.ArgumentParser(description='Basic s3')
 
@@ -11,14 +12,20 @@ parser.add_argument('-b','--bucket', action="store", dest="bucket_name", help='s
 parser.add_argument('-l','--list', action="store_true", help='list keys in bucket')
 parser.add_argument('-d','--download', action="store", dest="download_key",  help='Download files from a bucket')
 parser.add_argument('-u','--upload', action="store", dest="upload_key", help='Upload files')
+parser.add_argument('-p','--withparcel', action="store_true", help='Transfer with parcel')
 args = parser.parse_args()
 
 # create connection
+
+if args.withparcel:
+    gateway = '192.168.20.101'
+    s3port = 9000
 
 conn = boto.connect_s3(
        aws_access_key_id = access_key,
        aws_secret_access_key = secret_key,
        host = gateway,
+       port = s3port,
        calling_format = boto.s3.connection.OrdinaryCallingFormat(),
        )
 
