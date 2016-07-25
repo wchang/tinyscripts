@@ -448,4 +448,6 @@ https://github.com/utahta/pythonbrew
 pip installation please reference:
 http://pip-cn.readthedocs.io/en/latest/installing.html
 
-
+--------------------------------------------------------------------------------------
+Repacking a Linux Install ISO
+http://bencane.com/2013/06/12/mkisofs-repackaging-a-linux-install-iso/
