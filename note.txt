@@ -451,3 +451,6 @@ http://pip-cn.readthedocs.io/en/latest/installing.html
 --------------------------------------------------------------------------------------
 Repacking a Linux Install ISO
 http://bencane.com/2013/06/12/mkisofs-repackaging-a-linux-install-iso/
+---------------------------------------------------------------------------------------
+curl with parameters:
+curl -X POST http://117.103.96.216:8000/amsapp/primary_info/ -d '{"hostname":"'$a'","mm_ip":"'$e'","bay":"'$b'","location":"'$c'"}'
