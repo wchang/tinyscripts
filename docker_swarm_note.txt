@@ -1,0 +1,71 @@
+- Need docker 1.12 or higher version
+- Choose a node as a swarm leader 
+# docker swarm init --listen-addr 192.168.3.1:2377 --advertise-addr 192.168.3.1:2377
+and then you'll see something like this:
+Swarm initialized: current node (03eja6047rcpiceod8u6zv209) is now a manager.
+To add a worker to this swarm, run the following command:
+docker swarm join \
+--token SWMTKN-1-2979g09y3zuph7v45c9y5i4abuuakrf5aziy7388fds5g2bcyy-62gvpgxwg6jkzaxwhr8yg392j \
+192.168.3.1:2377
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+- For other nodes, use the following command to add the node into the swarm:
+# docker swarm join \
+--token SWMTKN-1-2979g09y3zuph7v45c9y5i4abuuakrf5aziy7388fds5g2bcyy-62gvpgxwg6jkzaxwhr8yg392j \
+192.168.3.1:2377
+
+- Now back to manager node
+# docker node list
+ID HOSTNAME STATUS AVAILABILITY MANAGER STATUS
+03eja6047rcpiceod8u6zv209 * hpwn301 Ready Active Leader
+9gpih26t5km6orwwkqgis9n30 hpwn302 Ready Active 
+
+- Now we're going to setup a network on this swarm, subnet defines the ip addresses that containers are going to use
+# docker network create --driver overlay --subnet 10.0.9.0/24 my-net
+- Check it
+# docker network list
+NETWORK ID NAME DRIVER SCOPE
+aa3522b0b4ad bridge bridge local 
+03d049bc8550 docker_gwbridge bridge local 
+12200c8e9089 host host local 
+ef2nz1snkodn ingress overlay swarm 
+2glhvp4kelxb my-net overlay swarm 
+7be236c6878f none null local
+- Create service on the network we created, which means the ip addresses are 10.0.9.X
+# docker service create --replicas=2 --network=my-net --name wjtest01 centos6:mpiv4 /usr/sbin/sshd -D
+- List your services and check container ID
+# docker service ls
+ID NAME REPLICAS IMAGE COMMAND
+cz2hj20liijz mytest01 2/2 centos6:mpiv4 /usr/sbin/sshd -D
+# docker ps -a
+CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
+9a5d27b5a312 centos6:mpiv4 "/usr/sbin/sshd -D" 3 hours ago Up 3 hours mytest01.2.5mv4gr6cn7j5ixa5u49xi379t
+- Login containers, check ip addresses and then ping each other
+# docker exec -it 9a5d27b5a312 /bin/bash
+# ping 10.0.9.4
+PING 10.0.9.4 (10.0.9.4) 56(84) bytes of data.
+64 bytes from 10.0.9.4: icmp_seq=1 ttl=64 time=0.440 ms
+64 bytes from 10.0.9.4: icmp_seq=2 ttl=64 time=0.228 ms
+64 bytes from 10.0.9.4: icmp_seq=3 ttl=64 time=0.237 ms
+- Start two dockers in two different physical machines for running mpi jobs, please make sure that docker images are in two nodes(centos6:mpiv4), we also bind cvmfs by using "--mount type=bind"
+# docker service create --replicas=2 --mount type=bind,source=/cvmfs/grid.cern.ch/,destination=/tmp --network=my-net --name wjtest01 centos6:mpiv4 /usr/sbin/sshd -D
+- You can check the service status:
+# docker service ls
+ID NAME REPLICAS IMAGE COMMAND
+bx43wqgvkw1n wjtest01 2/2 centos6:mpiv4 /usr/sbin/sshd -D
+# docker service ps bx43wqgvkw1n
+ID NAME IMAGE NODE DESIRED STATE CURRENT STATE ERROR
+07q1hibvnh8ujpirmctuwpxyk wjtest01.1 centos6:mpiv4 hpwn302 Running Running 11 minutes ago 
+4o4fdi03esib3orcwak9h6pjq wjtest01.2 centos6:mpiv4 hpwn301 Running Running 11 minutes ago
+- Login the docker and list /tmp, you'll see the directory of /cvmfs/grid.cern.ch
+# docker ps -a
+CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
+2ded9c496ed1 centos6:mpiv4 "/usr/sbin/sshd -D" 5 minutes ago Up 5 minutes wjtest01.2.4o4fdi03esib3orcwak9h6pjq
+
+# docker exec -it 2ded9c496ed1 /bin/bash
+[root@2ded9c496ed1 /]# ls /tmp
+3.1.22-0 3.1.45-0 centos7-ui-test default emi3wn-latest emi-ui-2.10.4-1_sl6v1 emi-ui-3.15.3-1_sl6v1 emi-ui-3.17.1-1_sl6v3 emi-wn-2.5.1-1_sl6v2 emi-wn-2.6.0-1_v1 emi-wn-3.15.3-1_sl6v1 emi-wn-3.7.3-1_sl6v2 Grid util
+3.1.39-0 3.2.11-1 centos7-ui-v03 emi3ui-latest emi3wn-test emi-ui-2.9.0-1_sl5v1 emi-ui-3.17.1-1_sl6v1 emi-ui-3.7.3-1_sl6v2 emi-wn-2.5.1-1_v1 emi-wn-3.10.0-1_sl6v1 emi-wn-3.17.1-1_sl6v1 etc pakiti vc
+3.1.41-0 centos7-ui-preview-v01 centos7-wn-preview-v01 emi3ui-test emi-ui-2.10.4-1_sl5v1 emi-ui-3.14.0-1_sl6v1 emi-ui-3.17.1-1_sl6v2 emi-wn-2.5.0-1 emi-wn-2.6.0-1_sl6v1 emi-wn-3.10.0-1_sl6v2 emi-wn-3.17.1-1_sl6v2 glite README
+- References:
+https://docs.docker.com/engine/swarm/
