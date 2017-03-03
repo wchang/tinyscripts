@@ -1,0 +1,28 @@
+MongoDB sharding cluster installation
+Environment:
+  - Three config servers for recording metadata
+  - Two sharding servers for saving real data
+  - One router for being a user interface
+Config server:
+  - Setup replica set on three servers
+    . All config servers should run this command to announce this is a config server and indicate replica set, dbpath and port
+      Also you have to make sure the dbpath alreay exists:
+      # mongod --configsvr --replSet cs-a --dbpath /wjdisk02 --port 27018
+    . Log-in one config server
+      # mongo --host <hostname> --port <port>
+    . Initiate replica set on three config servers:
+      rs.initiate(
+      {
+         _id: "cs-a",
+         configsvr: true,
+         members: [
+         { _id : 0, host : "cfg1.example.net:27018" },
+         { _id : 1, host : "cfg2.example.net:27018" },
+         { _id : 2, host : "cfg3.example.net:27018" }
+         ]
+        }
+      )
+    . Check config server status:
+      # rs.status()
+Sharding Servers:
+  -  
