@@ -35,6 +35,40 @@ Router:
   - hostname[01-03] are the hostname of three replica servers
   - port 27018 is the port for three replica servers to connect with each other
   - port 27017 is for router to contact with users
-  
+  - Log-in router by:
+    # ./mongo --host <hostname>:27017
+  - Enable sharding for one database
+    # sh.enableSharding("<database>")
+  - Add sharding servers:
+    # mongos> sh.addShard("202.169.170.7:27019")
+    And you'll see something like this:
+    { "shardAdded" : "shard0001", "ok" : 1 }
+  - Check status:
+    mongos> sh.status()
+    --- Sharding Status --- 
+    sharding version: {
+        "_id" : 1,
+        "minCompatibleVersion" : 5,
+        "currentVersion" : 6,
+        "clusterId" : ObjectId("58b7e0ae1dbe6770164d6f89")
+    }
+    shards:
+        {  "_id" : "shard0000",  "host" : "202.169.170.5:27019",  "state" : 1 }
+        {  "_id" : "shard0001",  "host" : "202.169.170.7:27019",  "state" : 1 }
+    active mongoses:
+        "3.4.1" : 1
+    autosplit:
+        Currently enabled: yes
+    balancer:
+        Currently enabled:  yes
+        Currently running:  no
+                Balancer lock taken at Thu Mar 02 2017 09:07:56 GMT+0000 (UTC) by ConfigServer:Balancer
+        Failed balancer rounds in last 5 attempts:  5
+        Last reported error:  Cannot accept sharding commands if not started with --shardsvr
+        Time of Reported error:  Fri Mar 03 2017 03:50:22 GMT+0000 (UTC)
+        Migration Results for the last 24 hours: 
+                No recent migrations
+    databases:
+
 References:
 https://docs.mongodb.com/manual/tutorial/deploy-shard-cluster/
