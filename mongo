@@ -25,4 +25,16 @@ Config server:
     . Check config server status:
       # rs.status()
 Sharding Servers:
-  -  
+  - Run this command, make sure database path exists
+    # ./mongod --dbpath /wjdisk01/data --port 27019 --shardsvr
+    
+Router:
+  - Run the command:
+    #  ./mongos --configdb cs-a/<hostname01>:27018,<hostname02>:27018,<hostname03>:27018 --port 27017 --logpath <logpath>
+  - cs-a is replica set name
+  - hostname[01-03] are the hostname of three replica servers
+  - port 27018 is the port for three replica servers to connect with each other
+  - port 27017 is for router to contact with users
+  
+References:
+https://docs.mongodb.com/manual/tutorial/deploy-shard-cluster/
