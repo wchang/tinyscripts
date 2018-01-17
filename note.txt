@@ -459,3 +459,14 @@ curl -X POST http://117.103.96.216:8000/amsapp/primary_info/ -d '{"hostname":"'$
 Chang default gateway
 -------------------------------------------------------------------------------------
  ip route add default via 192.168.1.254
+ 
+-------------------------------------------------------------------------------------
+Mount qcow2 image
+-------------------------------------------------------------------------------------
+modprobe nbd max_part=8
+qemu-nbd --connect=/dev/nbd0 /var/lib/vz/images/100/vm-100-disk-1.qcow2
+fdisk /dev/nbd0 -l
+mount /dev/nbd0p1 /mnt/somepoint/
+umount /mnt/somepoint/
+qemu-nbd --disconnect /dev/nbd0
+rmmod nbd
