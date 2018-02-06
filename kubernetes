@@ -1,0 +1,26 @@
+Master:
+# Init kubeadm and setup network
+kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address 10.2.0.189
+
+# Copy config file and change owner
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+# Setup flannel network
+kubectl create -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
+
+# Install dashboard and setup dashboard admin
+kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+kubectl create -f kubernetes-dashboard-admin.rbac.yaml
+
+# Install metrics-server
+git clone https://github.com/kubernetes-incubator/metrics-server
+cd metrics-server
+kubectl create -f /deploy
+
+# Install heapster 
+git clone https://github.com/kubernetes/heapster
+cd heapster/deploy/kube-config/rbac
+kubectl create -f heapster-rbac.yaml
+cd heapster/deploy/
+./kube.sh start
