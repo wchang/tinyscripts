@@ -24,3 +24,9 @@ cd heapster/deploy/kube-config/rbac
 kubectl create -f heapster-rbac.yaml
 cd heapster/deploy/
 ./kube.sh start
+
+# Enable Master to join Schedule
+kubectl taint nodes host-10-2-0-189 node-role.kubernetes.io/master:NoSchedule-
+
+# Create a long time token
+kubeadm token create --ttl 0
