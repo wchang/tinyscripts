@@ -485,3 +485,8 @@ Array3=( "key7" "key8" "key9" "key10" )
 
 A:
 echo ${Array1[@]} ${Array2[@]} | tr ' ' '\n' | sort | uniq -u
+
+------------------------------------------------------------------------------------
+Add network card and bind to a bridge for LXC container
+------------------------------------------------------------------------------------
+lxc config device add rmm-2-3-weijen01 ethmgmt nic name=ethmgmt nictype=bridged parent=brmgmt
