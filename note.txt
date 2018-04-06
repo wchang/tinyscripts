@@ -490,3 +490,21 @@ echo ${Array1[@]} ${Array2[@]} | tr ' ' '\n' | sort | uniq -u
 Add network card and bind to a bridge for LXC container
 ------------------------------------------------------------------------------------
 lxc config device add rmm-2-3-weijen01 ethmgmt nic name=ethmgmt nictype=bridged parent=brmgmt
+------------------------------------------------------------------------------------
+Generate UUID by using c++
+------------------------------------------------------------------------------------
+#include <iostream>
+#include <uuid/uuid.h>
+
+using namespace std ;
+
+
+int main(int argc, char const *argv[])
+{
+   uuid_t uuid;
+   uuid_generate(uuid);
+   char uuid_str[37];
+   uuid_unparse(uuid, uuid_str);
+   cout << uuid_str << endl;
+   return 0;
+}
