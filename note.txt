@@ -511,5 +511,4 @@ int main(int argc, char const *argv[])
 ---------------------------------------------------------------------------------------
 Make iso file
 ---------------------------------------------------------------------------------------
-http://rahn80643-blog.logdown.com/posts/1308161
 mkisofs -D -r -V "ATTENDLESS_UBUNTU" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o /opt/autoinstall.iso /opt/ubuntuiso
