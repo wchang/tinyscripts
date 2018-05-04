@@ -12,6 +12,7 @@ kubectl create -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Docume
 # Install dashboard and setup dashboard admin
 kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
 kubectl create -f kubernetes-dashboard-admin.rbac.yaml
+kubectl proxy --address 0.0.0.0 --accept-hosts '.*'
 
 # Install metrics-server
 git clone https://github.com/kubernetes-incubator/metrics-server
