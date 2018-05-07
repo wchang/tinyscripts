@@ -31,7 +31,7 @@ kubectl proxy --address 0.0.0.0 --accept-hosts '.*'
 # Install metrics-server
 git clone https://github.com/kubernetes-incubator/metrics-server
 cd metrics-server
-kubectl create -f /deploy
+kubectl create -f deploy/1.8+/
 
 # Install heapster 
 git clone https://github.com/kubernetes/heapster
