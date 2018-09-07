@@ -512,3 +512,6 @@ int main(int argc, char const *argv[])
 Make iso file
 ---------------------------------------------------------------------------------------
 mkisofs -D -r -V "ATTENDLESS_UBUNTU" -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o /opt/autoinstall.iso /opt/ubuntuiso
+---------------------------------------------------------------------------------------
+export LD_LIBRARY_PATH="/opt/supermicro/rsd/psme/lib"
+git push origin HEAD:feature/psme-rmm
