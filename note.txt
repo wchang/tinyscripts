@@ -519,3 +519,5 @@ git push origin HEAD:feature/psme-rmm
 CentOS7 -> Ubuntu16.04 preseed installation may suffer "Can't remove lvm" problem,
 need to clean lvm first (not tested): 
 d-i partman/early_command string lvremove --select all -ff -y; vgremove --select all -ff -y; pvremove /dev/sd* -ff -y
+---------------------------------------------------------------------------------------
+supersede domain-name-servers 10.2.0.1;
