@@ -521,3 +521,6 @@ need to clean lvm first (not tested):
 d-i partman/early_command string lvremove --select all -ff -y; vgremove --select all -ff -y; pvremove /dev/sd* -ff -y
 ---------------------------------------------------------------------------------------
 supersede domain-name-servers 10.2.0.1;
+---------------------------------------------------------------------------------------
+d-i partman/early_command string \
+    debconf-set grub-installer/bootdev /dev/sda
