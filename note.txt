@@ -516,11 +516,10 @@ mkisofs -D -r -V "ATTENDLESS_UBUNTU" -cache-inodes -J -l -b isolinux/isolinux.bi
 export LD_LIBRARY_PATH="/opt/supermicro/rsd/psme/lib"
 git push origin HEAD:feature/psme-rmm
 ---------------------------------------------------------------------------------------
-CentOS7 -> Ubuntu16.04 preseed installation may suffer "Can't remove lvm" problem,
-need to clean lvm first (not tested): 
-d-i partman/early_command string lvremove --select all -ff -y; vgremove --select all -ff -y; pvremove /dev/sd* -ff -y
----------------------------------------------------------------------------------------
 supersede domain-name-servers 10.2.0.1;
 ---------------------------------------------------------------------------------------
 d-i partman/early_command string \
     debconf-set grub-installer/bootdev /dev/sda
+---------------------------------------------------------------------------------------
+LXC add network interface
+lxc config device add CONTAINER-NAME eth1 nic name=eth1 nictype=bridged parent=lxdbr0
