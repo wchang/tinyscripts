@@ -523,3 +523,6 @@ d-i partman/early_command string \
 ---------------------------------------------------------------------------------------
 LXC add network interface
 lxc config device add CONTAINER-NAME eth1 nic name=eth1 nictype=bridged parent=lxdbr0
+--------------------------------------------------------------------------------------
+undefined reference to ...
+https://segmentfault.com/a/1190000006049907
