@@ -538,5 +538,16 @@ echo $[1554692160+23953670]
 
 date -d @1578645830 '+%Y%m%d %H:%M:%S'
 20200110 08:43:50
-
+--------------------------------------------------------------------------------------
 mtr 42.159.128.86 -r -c 20 -w —aslookup
+
+1. $ lsb_release -a
+2. $ df -hT
+3. $ df -i
+4. $ mount
+5. $ sudo lsblk -afp
+6. $ sudo parted -l
+7. $ sudo lvs
+8. $ sudo vgdisplay -v
+9. $ cat /proc/mdstat
+10. $ sudo tune2fs -l /dev/nvme13n1
